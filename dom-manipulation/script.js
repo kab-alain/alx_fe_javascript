@@ -173,8 +173,8 @@ function importQuotes() {
   reader.readAsText(file);
 }
 
-// ======= Server Sync =======
-async function syncQuotesWithServer() {
+// ======= Fetch Quotes From Server =======
+async function fetchQuotesFromServer() {
   try {
     const response = await fetch(SERVER_URL);
     const serverData = await response.json();
@@ -185,22 +185,30 @@ async function syncQuotesWithServer() {
       category: "Server"
     }));
 
-    let mergedQuotes = [...quotes];
-    serverQuotes.forEach(serverQuote => {
-      const exists = mergedQuotes.some(q => q.text === serverQuote.text && q.category === serverQuote.category);
-      if (!exists) mergedQuotes.push(serverQuote);
-    });
-
-    if (mergedQuotes.length > quotes.length) {
-      quotes = mergedQuotes;
-      localStorage.setItem("quotes", JSON.stringify(quotes));
-
-      populateCategories();
-      showNotification("New quotes synced from server!");
-      showRandomQuote();
-    }
+    return serverQuotes;
   } catch (err) {
-    console.error("Server sync failed:", err);
+    console.error("Failed to fetch quotes from server:", err);
+    return [];
+  }
+}
+
+// ======= Sync quotes with server =======
+async function syncQuotesWithServer() {
+  const serverQuotes = await fetchQuotesFromServer();
+  let mergedQuotes = [...quotes];
+
+  serverQuotes.forEach(serverQuote => {
+    const exists = mergedQuotes.some(q => q.text === serverQuote.text && q.category === serverQuote.category);
+    if (!exists) mergedQuotes.push(serverQuote);
+  });
+
+  if (mergedQuotes.length > quotes.length) {
+    quotes = mergedQuotes;
+    localStorage.setItem("quotes", JSON.stringify(quotes));
+
+    populateCategories();
+    showNotification("New quotes synced from server!");
+    showRandomQuote();
   }
 }
 
@@ -215,4 +223,14 @@ function showNotification(message) {
   notification.style.top = "20px";
   notification.style.right = "20px";
   notification.style.padding = "15px";
-  no
+  notification.style.backgroundColor = "#1a73e8";
+  notification.style.color = "#fff";
+  notification.style.borderRadius = "8px";
+  notification.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+  notification.style.zIndex = "1000";
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.remove();
+  }, 5000);
+}
