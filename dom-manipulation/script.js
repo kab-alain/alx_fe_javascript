@@ -17,10 +17,13 @@ if (localStorage.getItem("quotes")) {
 const quoteDisplay = document.getElementById("quoteDisplay");
 const newQuoteBtn = document.getElementById("newQuote");
 const exportBtn = document.getElementById("exportQuotesBtn");
+const importBtn = document.getElementById("importQuotesBtn");
+const importFileInput = document.getElementById("importQuotesFile");
 
 // ======= Event listeners =======
 newQuoteBtn.addEventListener("click", showRandomQuote);
 exportBtn.addEventListener("click", exportQuotes);
+importBtn.addEventListener("click", importQuotes);
 
 // ======= Show a random quote =======
 function showRandomQuote() {
@@ -66,7 +69,7 @@ function addQuote() {
   const newQuote = { text: newQuoteText, category: newQuoteCategory };
   quotes.push(newQuote);
 
-  // ✅ Save to localStorage
+  // Save to localStorage
   localStorage.setItem("quotes", JSON.stringify(quotes));
 
   document.getElementById("newQuoteText").value = "";
@@ -84,21 +87,54 @@ function exportQuotes() {
     return;
   }
 
-  // ✅ Create JSON string
   const dataStr = JSON.stringify(quotes, null, 2);
-
-  // ✅ Create a Blob with MIME type application/json
   const blob = new Blob([dataStr], { type: "application/json" });
 
-  // Create a temporary link to download the file
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes.json";
   a.click();
 
-  // Clean up the object URL
   URL.revokeObjectURL(url);
+}
+
+// ======= Import Quotes using FileReader =======
+function importQuotes() {
+  const file = importFileInput.files[0];
+  if (!file) {
+    alert("Please select a file to import!");
+    return;
+  }
+
+  const reader = new FileReader(); // ✅ FileReader
+
+  reader.onload = function (e) {   // ✅ onload
+    try {
+      const importedQuotes = JSON.parse(e.target.result); // JSON from file
+
+      if (!Array.isArray(importedQuotes)) throw "Invalid format";
+
+      importedQuotes.forEach(q => {
+        if (typeof q.text !== "string" || typeof q.category !== "string") {
+          throw "Invalid quote structure";
+        }
+      });
+
+      // Merge imported quotes
+      quotes = quotes.concat(importedQuotes);
+
+      // Save to localStorage
+      localStorage.setItem("quotes", JSON.stringify(quotes));
+
+      alert("Quotes imported successfully!");
+      showRandomQuote();
+    } catch (err) {
+      alert("Failed to import quotes: " + err);
+    }
+  };
+
+  reader.readAsText(file); // ✅ readAsText
 }
 
 // ======= Initialize =======
