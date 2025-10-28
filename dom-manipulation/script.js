@@ -118,6 +118,9 @@ function addQuote() {
 
   populateCategories();
   showRandomQuote();
+
+  // Send new quote to server
+  sendQuoteToServer(newQuote);
 }
 
 // ======= Export Quotes =======
@@ -209,6 +212,27 @@ async function syncQuotesWithServer() {
     populateCategories();
     showNotification("New quotes synced from server!");
     showRandomQuote();
+  }
+}
+
+// ======= Send a new quote to server (POST) =======
+async function sendQuoteToServer(quote) {
+  try {
+    const response = await fetch(SERVER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quote)
+    });
+
+    if (!response.ok) throw new Error("Failed to send quote to server");
+
+    const data = await response.json();
+    console.log("Quote sent to server successfully:", data);
+    showNotification("Quote synced to server!");
+  } catch (err) {
+    console.error("Error sending quote to server:", err);
   }
 }
 
